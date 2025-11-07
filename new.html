@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Smart Medicine Locator — Kengeri & RR Nagar Nearest</title>
+  <title>Smart Medicine Locator — Accordion Steps</title>
 
   <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -15,22 +15,32 @@
   <style>
     html, body { height: 100%; }
     #map { height: 420px; width: 100%; }
-    .glass { backdrop-filter: blur(12px); background: rgba(255,255,255,0.75); }
-    .tab-btn[aria-selected="true"] { background: #10b981; color: white; }
-    .chip { border: 1px solid rgba(0,0,0,0.1); padding: .4rem .7rem; border-radius: .75rem; }
+    .glass { backdrop-filter: blur(14px); background: rgba(255,255,255,0.7); }
+    .tab-btn[aria-selected="true"] { background: #10b981; color: white; box-shadow: 0 6px 16px rgb(16 185 129 / 25%); }
+    .chip { border: 1px solid rgba(0,0,0,0.1); padding: .45rem .75rem; border-radius: .75rem; transition: transform .12s ease; }
+    .chip:active, .btn-press:active { transform: translateY(1px) scale(.99); }
+    .header-pulse { animation: pulseGlow 2.2s ease-in-out infinite; }
+    @keyframes pulseGlow { 0%{filter: drop-shadow(0 0 0 rgba(16,185,129,0));} 50%{filter: drop-shadow(0 0 12px rgba(16,185,129,.55));} 100%{filter: drop-shadow(0 0 0 rgba(16,185,129,0));} }
+    .gradient-bg { background-image: radial-gradient(1200px 600px at 10% 0%, rgba(16,185,129,.08), transparent 60%), radial-gradient(900px 500px at 90% 10%, rgba(59,130,246,.08), transparent 60%), linear-gradient(180deg, #f8fbff, #f6fff9 40%, #f8fbff); }
+    .badge { font-size: .7rem; padding: .2rem .5rem; border-radius: .5rem; background: #ecfeff; color:#0369a1; border: 1px solid #a5f3fc; }
+    .shadow-soft { box-shadow: 0 20px 40px -22px rgba(2,6,23,.12); }
+    .acc-header { cursor:pointer; }
+    .acc-header[aria-expanded="true"] .chev { transform: rotate(180deg); }
   </style>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-sky-50 via-white to-emerald-50 text-slate-800">
+<body class="min-h-screen gradient-bg text-slate-800">
   <!-- Header -->
-  <header class="sticky top-0 z-30 bg-white/80 backdrop-blur border-b">
+  <header class="sticky top-0 z-30 bg-white/75 backdrop-blur border-b">
     <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-      <h1 class="font-semibold flex items-center gap-2">
-        <span class="text-emerald-600">🩺</span> Smart Medicine Locator — Prototype
+      <h1 class="font-semibold flex items-center gap-2 text-lg md:text-xl">
+        <span class="text-emerald-600 header-pulse text-2xl">🩺</span>
+        <span>Smart Medicine Locator — Prototype</span>
+        <span class="badge">Demo</span>
       </h1>
       <div class="flex items-center gap-3">
         <span id="helloUser" class="text-sm text-slate-700 hidden"></span>
-        <button id="openLogin" class="text-sm px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">Login</button>
-        <button id="logoutBtn" class="text-sm px-4 py-2 rounded-lg border hover:bg-slate-50 hidden">Logout</button>
+        <button id="openLogin" class="btn-press text-sm px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 shadow-soft">Login</button>
+        <button id="logoutBtn" class="btn-press text-sm px-4 py-2 rounded-lg border hover:bg-slate-50 hidden">Logout</button>
       </div>
     </div>
 
@@ -50,87 +60,115 @@
     <!-- TAB: HOME -->
     <section id="tabHome" role="tabpanel" aria-labelledby="tabbtn-home" class="grid lg:grid-cols-3 gap-6">
       <div class="lg:col-span-2 grid gap-4">
-        <!-- Step 0: Search -->
-        <div id="stepSearch" class="glass rounded-2xl shadow p-4">
-          <div class="flex items-center justify-between">
-            <h2 class="font-semibold mb-3">1) Search Medicine</h2>
-            <div class="flex items-center gap-2 text-sm">
-              <button id="setKengeri" class="chip hover:bg-slate-50">📍 Set to Kengeri</button>
-              <button id="setRRNagar" class="chip hover:bg-slate-50">📍 Set to RR Nagar</button>
+        <!-- Accordion: Step 1 -->
+        <div class="glass rounded-2xl shadow-soft">
+          <button id="hSearch" class="acc-header w-full flex items-center justify-between px-4 py-3 rounded-2xl">
+            <div class="flex items-center gap-3">
+              <span class="text-emerald-600 text-xl">1</span>
+              <span class="font-semibold">Search Medicine</span>
             </div>
-          </div>
-          <div class="flex gap-3 items-end">
-            <div class="flex-1">
-              <label class="text-xs text-slate-600">Medicine</label>
-              <input id="searchInput" list="medList" type="text" placeholder="e.g., Paracetamol 650 / Dolo 650 / Cetirizine 10"
-                     class="w-full px-6 py-4 text-3xl rounded-2xl border focus:outline-none focus:ring-2 focus:ring-emerald-300"
-                     autocomplete="off"/>
-              <datalist id="medList"></datalist>
+            <span class="chev transition-transform">⌄</span>
+          </button>
+          <div id="stepSearch" class="px-4 pb-4 hidden">
+            <div class="flex items-center justify-between mb-2">
+              <div class="text-xs text-slate-600">Type a medicine name, then proceed</div>
+              <div class="flex items-center gap-2 text-sm">
+                <button id="setKengeri" class="chip hover:bg-slate-50">📍 Set to Kengeri</button>
+                <button id="setRRNagar" class="chip hover:bg-slate-50">📍 Set to RR Nagar</button>
+              </div>
             </div>
-            <button id="goStepRadius" class="px-5 py-3 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">
-              Next: Radius →
-            </button>
-          </div>
-          <p class="text-xs text-slate-500 mt-2">Tip: Press Enter to jump ahead.</p>
-        </div>
-
-        <!-- Step 1: Radius -->
-        <div id="stepRadius" class="glass rounded-2xl shadow p-4 hidden">
-          <h2 class="font-semibold mb-3">2) Choose Radius</h2>
-          <div class="flex flex-wrap items-center gap-3">
-            <select id="radiusSelect" class="px-3 py-2 rounded-xl border focus:outline-none focus:ring-2 focus:ring-emerald-100">
-              <option value="0.5">0.5 km</option>
-              <option value="1" selected>1 km</option>
-              <option value="2">2 km</option>
-              <option value="5">5 km</option>
-              <option value="any">Any distance</option>
-            </select>
-
-            <div class="ml-auto flex gap-2">
-              <button id="backToSearch" class="px-4 py-2 rounded-lg border hover:bg-slate-50">← Back</button>
-              <button id="goStepNearest" class="px-5 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">
-                Next: Nearest →
+            <div class="flex flex-col gap-3">
+              <div class="w-full">
+                <label class="text-xs text-slate-600">Medicine</label>
+                <input id="searchInput" list="medList" type="text" placeholder="e.g., Paracetamol 650 / Dolo 650 / Cetirizine 10"
+                      class="w-full px-6 py-4 text-3xl rounded-2xl border focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                      autocomplete="off"/>
+                <datalist id="medList"></datalist>
+              </div>
+              <button id="goStepRadius" class="btn-press w-full px-5 py-3 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 shadow-soft">
+                Next: Radius →
               </button>
             </div>
+            <p class="text-xs text-slate-500 mt-2">Tip: Press Enter to jump ahead.</p>
           </div>
         </div>
 
-        <!-- Step 2: Nearest -->
-        <div id="stepNearest" class="glass rounded-2xl shadow p-4 hidden">
-          <div class="flex items-center justify-between mb-2">
-            <h2 class="font-semibold">3) Nearest Store</h2>
-            <div class="text-sm text-slate-500">Result <span id="nearIdx">0</span>/<span id="nearTotal">0</span></div>
-          </div>
-          <div class="flex gap-2 mb-3">
-            <button id="nearPrev" class="px-3 py-1.5 rounded-lg border hover:bg-slate-50">← Previous</button>
-            <button id="nearNext" class="px-3 py-1.5 rounded-lg border hover:bg-slate-50">Next →</button>
-            <div class="ml-auto flex gap-2">
-              <button id="backToRadius" class="px-4 py-1.5 rounded-lg border hover:bg-slate-50">← Back</button>
-              <button id="goStepCheapest" class="px-5 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">Next: Cheapest →</button>
+        <!-- Accordion: Step 2 -->
+        <div class="glass rounded-2xl shadow-soft">
+          <button id="hRadius" class="acc-header w-full flex items-center justify-between px-4 py-3 rounded-2xl">
+            <div class="flex items-center gap-3">
+              <span class="text-emerald-600 text-xl">2</span>
+              <span class="font-semibold">Choose Radius</span>
+            </div>
+            <span class="chev transition-transform">⌄</span>
+          </button>
+          <div id="stepRadius" class="px-4 pb-4 hidden">
+            <div class="flex flex-col gap-3">
+              <select id="radiusSelect" class="w-full px-3 py-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-emerald-100">
+                <option value="0.5">0.5 km</option>
+                <option value="1" selected>1 km</option>
+                <option value="2">2 km</option>
+                <option value="5">5 km</option>
+                <option value="any">Any distance</option>
+              </select>
+              <div class="grid grid-cols-2 gap-2">
+                <button id="backToSearch" class="btn-press px-4 py-3 rounded-lg border hover:bg-slate-50">← Back</button>
+                <button id="goStepNearest" class="btn-press px-5 py-3 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 shadow-soft">
+                  Next: Nearest →
+                </button>
+              </div>
             </div>
           </div>
-          <div id="nearResult" class="rounded-xl border p-3 bg-white/80"></div>
         </div>
 
-        <!-- Step 3: Cheapest -->
-        <div id="stepCheapest" class="glass rounded-2xl shadow p-4 hidden">
-          <div class="flex items-center justify-between mb-2">
-            <h2 class="font-semibold">4) Cheapest In-Stock</h2>
-            <div class="text-sm text-slate-500">Result <span id="cheapIdx">0</span>/<span id="cheapTotal">0</span></div>
-          </div>
-          <div class="flex gap-2 mb-3">
-            <button id="cheapPrev" class="px-3 py-1.5 rounded-lg border hover:bg-slate-50">← Previous</button>
-            <button id="cheapNext" class="px-3 py-1.5 rounded-lg border hover:bg-slate-50">Next →</button>
-            <div class="ml-auto">
-              <button id="backToNearest" class="px-4 py-1.5 rounded-lg border hover:bg-slate-50">← Back</button>
+        <!-- Accordion: Step 3 -->
+        <div class="glass rounded-2xl shadow-soft">
+          <button id="hNearest" class="acc-header w-full flex items-center justify-between px-4 py-3 rounded-2xl">
+            <div class="flex items-center gap-3">
+              <span class="text-emerald-600 text-xl">3</span>
+              <span class="font-semibold">Nearest Store</span>
+            </div>
+            <span class="chev transition-transform">⌄</span>
+          </button>
+          <div id="stepNearest" class="px-4 pb-4 hidden">
+            <div class="flex items-center justify-between mb-2">
+              <div class="text-sm text-slate-500">Result <span id="nearIdx">0</span>/<span id="nearTotal">0</span></div>
+              <button id="goStepCheapest" class="btn-press px-3 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 shadow-soft">Next: Cheapest →</button>
+            </div>
+            <div id="nearResult" class="rounded-xl border p-3 bg-white/80 mb-3"></div>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+              <button id="nearPrev" class="btn-press px-3 py-2 rounded-lg border hover:bg-slate-50">← Previous</button>
+              <button id="nearNext" class="btn-press px-3 py-2 rounded-lg border hover:bg-slate-50">Next →</button>
+              <button id="backToRadius" class="btn-press px-3 py-2 rounded-lg border hover:bg-slate-50">← Radius</button>
             </div>
           </div>
-          <div id="cheapResult" class="rounded-xl border p-3 bg-white/80"></div>
+        </div>
+
+        <!-- Accordion: Step 4 -->
+        <div class="glass rounded-2xl shadow-soft">
+          <button id="hCheapest" class="acc-header w-full flex items-center justify-between px-4 py-3 rounded-2xl">
+            <div class="flex items-center gap-3">
+              <span class="text-emerald-600 text-xl">4</span>
+              <span class="font-semibold">Cheapest In-Stock</span>
+            </div>
+            <span class="chev transition-transform">⌄</span>
+          </button>
+          <div id="stepCheapest" class="px-4 pb-4 hidden">
+            <div class="flex items-center justify-between mb-2">
+              <div class="text-sm text-slate-500">Result <span id="cheapIdx">0</span>/<span id="cheapTotal">0</span></div>
+            </div>
+            <div id="cheapResult" class="rounded-xl border p-3 bg-white/80 mb-3"></div>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+              <button id="cheapPrev" class="btn-press px-3 py-2 rounded-lg border hover:bg-slate-50">← Previous</button>
+              <button id="cheapNext" class="btn-press px-3 py-2 rounded-lg border hover:bg-slate-50">Next →</button>
+              <button id="backToNearest" class="btn-press px-3 py-2 rounded-lg border hover:bg-slate-50">← Nearest</button>
+            </div>
+          </div>
         </div>
       </div>
 
       <!-- Map -->
-      <aside class="glass rounded-2xl shadow p-4">
+      <aside class="glass rounded-2xl shadow-soft p-4">
         <h3 class="font-semibold mb-2">Map</h3>
         <div id="map" class="rounded-xl overflow-hidden"></div>
         <p id="geoStatus" class="text-xs text-slate-500 mt-2">Loading map…</p>
@@ -140,17 +178,15 @@
     <!-- TAB: PROFILE -->
     <section id="tabProfile" role="tabpanel" aria-labelledby="tabbtn-profile" class="hidden">
       <div class="grid md:grid-cols-2 gap-6">
-        <!-- Login Data -->
-        <div class="glass rounded-2xl shadow p-4">
+        <div class="glass rounded-2xl shadow-soft p-4">
           <h2 class="font-semibold mb-3">Profile</h2>
           <div id="profileInfo" class="text-sm space-y-1"></div>
         </div>
 
-        <!-- Search History -->
-        <div class="glass rounded-2xl shadow p-4">
+        <div class="glass rounded-2xl shadow-soft p-4">
           <div class="flex items-center justify-between mb-2">
             <h2 class="font-semibold">Medicine Search History</h2>
-            <button id="clearHistory" class="px-3 py-1.5 rounded-lg border hover:bg-slate-50">Clear</button>
+            <button id="clearHistory" class="btn-press px-3 py-1.5 rounded-lg border hover:bg-slate-50">Clear</button>
           </div>
           <ul id="historyList" class="text-sm divide-y"></ul>
         </div>
@@ -159,30 +195,64 @@
 
     <!-- TAB: REPORT -->
     <section id="tabReport" role="tabpanel" aria-labelledby="tabbtn-report" class="hidden">
-      <div class="glass rounded-2xl shadow p-4">
-        <div class="flex items-center justify-between mb-3">
-          <h2 class="font-semibold">Report</h2>
-          <div class="flex gap-2">
-            <button id="saveReport" class="px-4 py-2 rounded-lg border hover:bg-slate-50">Save</button>
-            <button id="downloadReport" class="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">Download .txt</button>
+      <div class="glass rounded-2xl shadow-soft p-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <div class="flex items-center gap-2"><h2 class="font-semibold">Report — Tell us about this website</h2><span class="badge">Your feedback matters</span></div>
+          <div class="flex flex-wrap gap-2">
+            <button id="insertTemplate" class="btn-press px-3 py-2 rounded-lg border hover:bg-slate-50">Insert Template</button>
+            <button id="togglePreview" class="btn-press px-3 py-2 rounded-lg border hover:bg-slate-50">Preview</button>
+            <button id="saveReport" class="btn-press px-3 py-2 rounded-lg border hover:bg-slate-50">Save</button>
+            <button id="downloadReport" class="btn-press px-3 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 shadow-soft">Download .txt</button>
+            <button id="clearReport" class="btn-press px-3 py-2 rounded-lg border hover:bg-rose-50">Clear</button>
           </div>
         </div>
-        <textarea id="reportText" class="w-full h-72 p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-emerald-200" placeholder="Write your report here..."></textarea>
-        <p id="reportStatus" class="text-xs text-slate-500 mt-2">Not saved yet.</p>
+
+        <div class="text-xs text-slate-600 mb-3">
+          Tip: Use <code>**bold**</code> for emphasis, <code># Heading</code> for sections, and lists with <code>-</code>.
+        </div>
+
+        <div id="reportEditorWrap">
+          <textarea id="reportText" class="w-full h-80 p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                    placeholder="Share your experience with the Smart Medicine Locator website. What worked well? What needs improvement?"></textarea>
+        </div>
+        <div id="reportPreview" class="hidden w-full h-80 p-4 rounded-xl border bg-white/80 overflow-auto prose prose-sm max-w-none"></div>
+
+        <div class="flex items-center justify-between mt-2 text-xs text-slate-600">
+          <p id="reportStatus">Not saved yet.</p>
+          <p><span id="wordCount">0</span> words • <span id="charCount">0</span> chars</p>
+        </div>
+
+        <div class="mt-4 grid md:grid-cols-2 gap-4">
+          <div class="rounded-xl border p-3 bg-white/70">
+            <h3 class="font-medium mb-2">Suggested Topics</h3>
+            <ul class="list-disc list-inside text-sm text-slate-700 space-y-1">
+              <li>Design & visual appeal</li>
+              <li>Ease of use & navigation</li>
+              <li>Search accuracy & speed</li>
+              <li>Map usefulness</li>
+              <li>Suggestions for improvement</li>
+            </ul>
+          </div>
+          <div class="rounded-xl border p-3 bg-white/70">
+            <h3 class="font-medium mb-2">Rating (optional)</h3>
+            <div id="ratingWrap" class="flex items-center gap-1 text-2xl cursor-pointer select-none">
+              <span data-star="1">☆</span><span data-star="2">☆</span><span data-star="3">☆</span><span data-star="4">☆</span><span data-star="5">☆</span>
+            </div>
+            <p id="ratingNote" class="text-xs text-slate-500 mt-1">Click to set rating; it will be appended to your report.</p>
+          </div>
+        </div>
       </div>
     </section>
 
     <!-- TAB: SETTINGS -->
     <section id="tabSettings" role="tabpanel" aria-labelledby="tabbtn-settings" class="hidden">
-      <div class="glass rounded-2xl shadow p-4">
+      <div class="glass rounded-2xl shadow-soft p-4">
         <h2 class="font-semibold mb-3">Settings</h2>
         <p id="settingsStatus" class="text-sm text-slate-600 mb-4">Checking login status…</p>
         <div class="flex flex-wrap gap-3">
-          <button id="settingsLogin" class="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">Login</button>
-          <button id="settingsLogout" class="px-4 py-2 rounded-lg border hover:bg-slate-50">Logout</button>
-
-          <!-- Location button with symbol (kept from previous step) -->
-          <button id="settingsLocate" class="px-4 py-2 rounded-lg border hover:bg-slate-50 flex items-center gap-2">
+          <button id="settingsLogin" class="btn-press px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 shadow-soft">Login</button>
+          <button id="settingsLogout" class="btn-press px-4 py-2 rounded-lg border hover:bg-slate-50">Logout</button>
+          <button id="settingsLocate" class="btn-press px-4 py-2 rounded-lg border hover:bg-slate-50 flex items-center gap-2">
             <span aria-hidden="true">📍</span>
             <span>Use Current Location & Find Nearest</span>
           </button>
@@ -191,6 +261,10 @@
       </div>
     </section>
   </main>
+
+  <footer class="max-w-6xl mx-auto px-4 pb-8 text-center text-xs text-slate-500">
+    Made with ❤️ for quick demos — data is mock and for illustration only.
+  </footer>
 
   <!-- Login Modal -->
   <div id="loginModal" class="fixed inset-0 hidden items-center justify-center bg-black/50 p-4 z-50">
@@ -219,7 +293,7 @@
                  class="w-full px-4 py-2 rounded-xl border focus:outline-none focus:ring-2 focus:ring-emerald-300"/>
         </div>
 
-        <button id="saveLogin" class="w-full mt-2 px-4 py-3 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition">
+        <button id="saveLogin" class="btn-press w-full mt-2 px-4 py-3 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition shadow-soft">
           Continue →
         </button>
       </div>
@@ -239,10 +313,10 @@
       const R = 6371e3, toRad = (d) => d*Math.PI/180;
       const dLat = toRad(b.lat-a.lat), dLng = toRad(b.lng-a.lng);
       const s = Math.sin(dLat/2)**2 + Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.sin(dLng/2)**2;
-      return 2*R*Math.atan2(Math.sqrt(s), Math.sqrt(1-s));
+      return 2*R*Math.atan2(Math.sqrt(1-s), Math.sqrt(s));
     }
 
-    // ---------- Leaflet icon fix ----------
+    // Leaflet icon fix
     (function fixLeafletIcons(){
       const base = 'https://unpkg.com/leaflet@1.9.4/dist/images/';
       L.Icon.Default.mergeOptions({
@@ -252,15 +326,14 @@
       });
     })();
 
-    // ---------- Pharmacies (added Kengeri + RR Nagar) ----------
+    // ---------- Pharmacies (with Kengeri + RR Nagar) ----------
     const PHARMACIES = [
-      // Core city list (trimmed from earlier answer to keep focus)
       { id: 1, name: 'MedPlus Indiranagar', phone:'+91-8022221111', lat:12.9719, lng:77.6412, rating:4.4,
         inventory:{'Paracetamol 650':{price:22,stock:25}, 'Dolo 650':{price:28,stock:35}, 'Azithromycin 500':{price:82,stock:8}, 'Cetirizine 10':{price:15,stock:40}, 'Pantoprazole 40':{price:32,stock:20}, 'Amoxicillin 500':{price:68,stock:10}, 'ORS Sachet':{price:18,stock:50}} },
       { id: 2, name: 'Apollo Pharmacy MG Road', phone:'+91-8022222222', lat:12.9738, lng:77.6113, rating:4.2,
         inventory:{'Paracetamol 650':{price:24,stock:2}, 'Dolo 650':{price:27,stock:12}, 'Metformin 500':{price:16,stock:30}, 'Atorvastatin 10':{price:55,stock:10}, 'Cough Syrup 100ml':{price:75,stock:9}} },
 
-      // ---- Kengeri area (approx coordinates) ----
+      // Kengeri
       { id: 101, name: 'MedPlus Kengeri', phone:'+91-8028001101', lat:12.9098, lng:77.4858, rating:4.3,
         inventory:{'Paracetamol 650':{price:22.5,stock:30}, 'Dolo 650':{price:27.5,stock:25}, 'Cetirizine 10':{price:14,stock:60}, 'Pantoprazole 40':{price:31,stock:20}, 'Amoxicillin 500':{price:67,stock:8}} },
       { id: 102, name: 'Apollo Pharmacy Kengeri Satellite Town', phone:'+91-8028001102', lat:12.9130, lng:77.4905, rating:4.2,
@@ -268,7 +341,7 @@
       { id: 103, name: 'Sri Lakshmi Medicals Kengeri', phone:'+91-8028001103', lat:12.9075, lng:77.4812, rating:4.1,
         inventory:{'Paracetamol 650':{price:21.9,stock:28}, 'Metformin 500':{price:15.5,stock:40}, 'Cough Syrup 100ml':{price:72,stock:10}, 'Dolo 650':{price:26.5,stock:16}} },
 
-      // ---- Rajarajeshwari Nagar (approx coordinates) ----
+      // RR Nagar
       { id: 111, name: 'MedPlus Rajarajeshwari Nagar', phone:'+91-8028001111', lat:12.9258, lng:77.5065, rating:4.3,
         inventory:{'Paracetamol 650':{price:22.0,stock:35}, 'Dolo 650':{price:26.8,stock:20}, 'Cetirizine 10':{price:13.8,stock:70}, 'Pantoprazole 40':{price:30,stock:18}} },
       { id: 112, name: 'Apollo Pharmacy RR Nagar', phone:'+91-8028001112', lat:12.9302, lng:77.5091, rating:4.2,
@@ -276,7 +349,7 @@
       { id: 113, name: 'Sri Raghavendra Medicals RR Nagar', phone:'+91-8028001113', lat:12.9220, lng:77.5015, rating:4.0,
         inventory:{'Paracetamol 650':{price:22.8,stock:26}, 'Dolo 650':{price:27.0,stock:18}, 'ORS Sachet':{price:16.5,stock:90}, 'Cough Syrup 100ml':{price:70,stock:8}} },
 
-      // A couple more core entries so map has context
+      // extra city context
       { id: 3, name: '1MG Wellness Koramangala', phone:'+91-8033333333', lat:12.9345, lng:77.6141, rating:4.5,
         inventory:{'Paracetamol 650':{price:26,stock:20}, 'Dolo 650':{price:29,stock:0}, 'Metformin 500':{price:15,stock:14}, 'Azithromycin 500':{price:78,stock:6}, 'Vitamin C 500':{price:45,stock:25}, 'Zinc 50':{price:28,stock:30}} },
       { id: 4, name: 'Netmeds Residency Road', phone:'+91-8044444444', lat:12.9689, lng:77.6046, rating:4.1,
@@ -291,15 +364,13 @@
     let nearestRows = [], nearIdx = 0;
     let cheapestRows = [], cheapIdx = 0;
 
-    // ---------- Storage helpers ----------
+    // ---------- Storage ----------
     function getUser(){ try { return JSON.parse(localStorage.getItem('sml_user')||'null'); } catch { return null; } }
     function setUser(u){ localStorage.setItem('sml_user', JSON.stringify(u)); }
     function clearUser(){ localStorage.removeItem('sml_user'); }
     function getHistory(){ try { return JSON.parse(localStorage.getItem('sml_history')||'[]'); } catch { return []; } }
     function setHistory(arr){ localStorage.setItem('sml_history', JSON.stringify(arr)); }
-    function pushHistory(entry){
-      const arr = getHistory(); arr.unshift(entry); if (arr.length>50) arr.length=50; setHistory(arr);
-    }
+    function pushHistory(entry){ const arr = getHistory(); arr.unshift(entry); if (arr.length>50) arr.length=50; setHistory(arr); }
     function getReport(){ return localStorage.getItem('sml_report') || ''; }
     function setReport(text){ localStorage.setItem('sml_report', text); }
 
@@ -317,7 +388,6 @@
         }, ()=>{}, { enableHighAccuracy:true, timeout:8000 });
       }
     }
-
     function updateLocation(lat, lng, accuracy){
       userLoc = { lat, lng };
       const acc = Math.min(Math.max(accuracy||60,10), 200);
@@ -326,7 +396,6 @@
       map.setView([lat, lng], 13);
       $('#geoStatus').textContent = `Location: ${lat.toFixed(4)}, ${lng.toFixed(4)} • ±${Math.round(acc)} m`;
     }
-
     function putStoreMarkers(rows, query){
       const toRemove = [];
       map.eachLayer((layer)=>{
@@ -334,7 +403,6 @@
         if (layer instanceof L.Popup){ toRemove.push(layer); }
       });
       toRemove.forEach(l=>map.removeLayer(l));
-
       rows.forEach((p, i)=>{
         L.marker([p.lat, p.lng]).addTo(map)
           .bindPopup(`<b>${i+1}. ${p.name}</b><br>⭐ ${p.rating}<br>${formatRs(p.inventory[query].price)} • ${km(p._dist).toFixed(2)} km`);
@@ -345,7 +413,7 @@
       }
     }
 
-    // ---------- COMMON SEARCH ----------
+    // ---------- Search engine ----------
     function runCommonSearch(query, radiusValue, mode){
       const q = (query||'').trim();
       if (!q){ alert('Enter a medicine name'); return []; }
@@ -377,7 +445,7 @@
       return rows;
     }
 
-    // ---------- Render helpers ----------
+    // ---------- Cards ----------
     function storeCard(p, q){
       const inv = p.inventory[q];
       const dkm = km(p._dist).toFixed(2);
@@ -402,7 +470,6 @@
         </div>
       `;
     }
-
     function bindFocusButtons(containerId, rows){
       const wrap = $(containerId);
       wrap.querySelectorAll('[data-focus]').forEach(btn=>{
@@ -416,14 +483,71 @@
       });
     }
 
-    // ---------- Steps logic ----------
-    function showOnlySteps(ids){
-      ['stepSearch','stepRadius','stepNearest','stepCheapest'].forEach(id=>{
-        const el = document.getElementById(id);
-        if (!el) return;
-        if (ids.includes(id)) el.classList.remove('hidden');
-        else el.classList.add('hidden');
+    // ---------- Accordion logic ----------
+    function closeAllAcc(){
+      ['stepSearch','stepRadius','stepNearest','stepCheapest'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+      ['hSearch','hRadius','hNearest','hCheapest'].forEach(id=>document.getElementById(id).setAttribute('aria-expanded','false'));
+      setTimeout(()=> map && map.invalidateSize(), 60);
+    }
+    function openAcc(id){
+      document.getElementById(id).classList.remove('hidden');
+      const hId = id === 'stepSearch' ? 'hSearch' : id === 'stepRadius' ? 'hRadius' : id === 'stepNearest' ? 'hNearest' : 'hCheapest';
+      document.getElementById(hId).setAttribute('aria-expanded','true');
+      setTimeout(()=> map && map.invalidateSize(), 60);
+    }
+
+    function initAccordion(){
+      // Header click handlers with prerequisite checks
+      $('#hSearch').addEventListener('click', ()=>{
+        if ($('#hSearch').getAttribute('aria-expanded')==='true'){ closeAllAcc(); return; }
+        closeAllAcc(); openAcc('stepSearch'); $('#searchInput').focus();
       });
+
+      $('#hRadius').addEventListener('click', ()=>{
+        const q = $('#searchInput').value.trim();
+        if (!q){ alert('Please enter a medicine in Step 1 first.'); return; }
+        if ($('#hRadius').getAttribute('aria-expanded')==='true'){ closeAllAcc(); return; }
+        closeAllAcc(); openAcc('stepRadius'); $('#radiusSelect').focus();
+      });
+
+      $('#hNearest').addEventListener('click', ()=>{
+        const q = $('#searchInput').value.trim();
+        if (!q){ alert('Please complete Step 1 (Search) first.'); return; }
+        if ($('#hNearest').getAttribute('aria-expanded')==='true'){ closeAllAcc(); return; }
+        // Ensure we have radius chosen; if none chosen yet, open radius instead
+        const r = $('#radiusSelect').value || 'any';
+        nearestRows = runCommonSearch(q, r, 'nearest');
+        if (!nearestRows.length){ alert('No stores found for the selected radius.'); return; }
+        nearIdx = 0; renderNearest();
+        closeAllAcc(); openAcc('stepNearest');
+      });
+
+      $('#hCheapest').addEventListener('click', ()=>{
+        const q = $('#searchInput').value.trim();
+        if (!q){ alert('Please complete Step 1 (Search) first.'); return; }
+        const r = $('#radiusSelect').value || 'any';
+        cheapestRows = runCommonSearch(q, r, 'cheapest');
+        if (!cheapestRows.length){ alert('No in-stock stores found for the selected radius.'); return; }
+        cheapIdx = 0; renderCheapest();
+        if ($('#hCheapest').getAttribute('aria-expanded')==='true'){ closeAllAcc(); return; }
+        closeAllAcc(); openAcc('stepCheapest');
+      });
+    }
+
+    // ---------- Steps behavior ----------
+    function renderNearest(){
+      $('#nearTotal').textContent = nearestRows.length;
+      $('#nearIdx').textContent = nearIdx+1;
+      const p = nearestRows[nearIdx];
+      $('#nearResult').innerHTML = storeCard(p, $('#searchInput').value.trim());
+      bindFocusButtons('#nearResult', nearestRows);
+    }
+    function renderCheapest(){
+      $('#cheapTotal').textContent = cheapestRows.length;
+      $('#cheapIdx').textContent = cheapIdx+1;
+      const p = cheapestRows[cheapIdx];
+      $('#cheapResult').innerHTML = storeCard(p, $('#searchInput').value.trim());
+      bindFocusButtons('#cheapResult', cheapestRows);
     }
 
     function initSteps(){
@@ -431,88 +555,53 @@
       const radiusSelect = $('#radiusSelect');
 
       // autocomplete list
-      const dl = $('#medList');
-      MEDICINE_NAMES.forEach(n=>{
-        const opt=document.createElement('option');
-        opt.value=n; dl.appendChild(opt);
-      });
+      const dl = document.createElement('datalist'); dl.id='medList';
+      if (!document.getElementById('medList')) document.body.appendChild(dl);
+      MEDICINE_NAMES.forEach(n=>{ const opt=document.createElement('option'); opt.value=n; $('#medList').appendChild(opt); });
 
       const last = localStorage.getItem('sml_last_query');
       if (last) searchInput.value = last;
 
-      // STEP 0 → STEP 1
+      // Buttons inside panels still advance the flow
       $('#goStepRadius').addEventListener('click', ()=>{
         if (!searchInput.value.trim()){ alert('Enter a medicine name'); return; }
         localStorage.setItem('sml_last_query', searchInput.value.trim());
-        showOnlySteps(['stepRadius']);
-        radiusSelect.focus();
+        closeAllAcc(); openAcc('stepRadius'); radiusSelect.focus();
       });
+      searchInput.addEventListener('keydown', (e)=>{ if (e.key==='Enter') $('#goStepRadius').click(); });
 
-      searchInput.addEventListener('keydown', (e)=>{
-        if (e.key === 'Enter'){ $('#goStepRadius').click(); }
-      });
+      $('#backToSearch').addEventListener('click', ()=>{ closeAllAcc(); openAcc('stepSearch'); });
 
-      $('#backToSearch').addEventListener('click', ()=>{
-        showOnlySteps(['stepSearch']);
-        searchInput.focus();
-      });
-
-      // STEP 1 → STEP 2 (Nearest)
       function goNearest(){
         const q = searchInput.value.trim();
-        const r = radiusSelect.value;
+        const r = radiusSelect.value || 'any';
         nearestRows = runCommonSearch(q, r, 'nearest');
         nearIdx = 0;
         if (!nearestRows.length){ alert('No stores found for selected radius.'); return; }
         renderNearest();
         pushHistory({ q, radius: r, ts: Date.now() });
-        showOnlySteps(['stepNearest']);
+        closeAllAcc(); openAcc('stepNearest');
       }
-
       $('#goStepNearest').addEventListener('click', goNearest);
-      radiusSelect.addEventListener('keydown', (e)=>{
-        if (e.key === 'Enter') goNearest();
-      });
+      radiusSelect.addEventListener('keydown', (e)=>{ if (e.key==='Enter') goNearest(); });
 
-      $('#backToRadius').addEventListener('click', ()=>{
-        showOnlySteps(['stepRadius']);
-        radiusSelect.focus();
-      });
-
-      // Nearest nav
       $('#nearPrev').addEventListener('click', ()=>{ if (nearIdx>0){ nearIdx--; renderNearest(); } });
       $('#nearNext').addEventListener('click', ()=>{ if (nearIdx<nearestRows.length-1){ nearIdx++; renderNearest(); } });
+      $('#backToRadius').addEventListener('click', ()=>{ closeAllAcc(); openAcc('stepRadius'); });
 
-      // STEP 2 → STEP 3 (Cheapest)
       $('#goStepCheapest').addEventListener('click', ()=>{
         const q = searchInput.value.trim();
-        const r = radiusSelect.value;
+        const r = radiusSelect.value || 'any';
         cheapestRows = runCommonSearch(q, r, 'cheapest');
         cheapIdx = 0;
         if (!cheapestRows.length){ alert('No in-stock stores found in selected radius.'); return; }
         renderCheapest();
-        showOnlySteps(['stepCheapest']);
+        closeAllAcc(); openAcc('stepCheapest');
       });
 
-      $('#backToNearest').addEventListener('click', ()=>{
-        showOnlySteps(['stepNearest']);
-      });
-
-      function renderNearest(){
-        $('#nearTotal').textContent = nearestRows.length;
-        $('#nearIdx').textContent = nearIdx+1;
-        const p = nearestRows[nearIdx];
-        $('#nearResult').innerHTML = storeCard(p, searchInput.value.trim());
-        bindFocusButtons('#nearResult', nearestRows);
-      }
-
-      function renderCheapest(){
-        $('#cheapTotal').textContent = cheapestRows.length;
-        $('#cheapIdx').textContent = cheapIdx+1;
-        const p = cheapestRows[cheapIdx];
-        $('#cheapResult').innerHTML = storeCard(p, searchInput.value.trim());
-        bindFocusButtons('#cheapResult', cheapestRows);
-      }
+      $('#cheapPrev').addEventListener('click', ()=>{ if (cheapIdx>0){ cheapIdx--; renderCheapest(); } });
+      $('#cheapNext').addEventListener('click', ()=>{ if (cheapIdx<cheapestRows.length-1){ cheapIdx++; renderCheapest(); } });
+      $('#backToNearest').addEventListener('click', ()=>{ closeAllAcc(); openAcc('stepNearest'); });
     }
 
     // ---------- Tabs ----------
@@ -530,7 +619,6 @@
       if (id === 'tabReport'){ renderReport(); }
       if (id === 'tabSettings'){ renderSettings(); }
     }
-
     function initTabs(){
       $('#tabbtn-home').addEventListener('click', ()=> setActiveTab('tabHome'));
       $('#tabbtn-profile').addEventListener('click', ()=> setActiveTab('tabProfile'));
@@ -552,7 +640,7 @@
       } else {
         box.innerHTML = `
           <div class="text-slate-600">You are not logged in.</div>
-          <button class="mt-2 px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700" id="profileLoginBtn">Login</button>
+          <button class="btn-press mt-2 px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 shadow-soft" id="profileLoginBtn">Login</button>
         `;
         const btn = $('#profileLoginBtn');
         if (btn) btn.addEventListener('click', ()=>{
@@ -571,7 +659,7 @@
               <div class="font-medium">${h.q}</div>
               <div class="text-xs text-slate-500">Radius: ${h.radius} • ${fmtDT(h.ts)}</div>
             </div>
-            <button class="px-3 py-1 rounded-lg border hover:bg-slate-50" data-replay="${h.q}|${h.radius}">Search again</button>
+            <button class="btn-press px-3 py-1 rounded-lg border hover:bg-slate-50" data-replay="${h.q}|${h.radius}">Search again</button>
           </li>
         `).join('');
         list.querySelectorAll('[data-replay]').forEach(btn=>{
@@ -580,7 +668,9 @@
             setActiveTab('tabHome');
             $('#searchInput').value = q;
             $('#radiusSelect').value = r;
-            document.getElementById('goStepNearest').click();
+            // Jump user into nearest panel
+            nearestRows = runCommonSearch(q, r, 'nearest'); nearIdx = 0; renderNearest();
+            closeAllAcc(); openAcc('stepNearest');
           });
         });
       }
@@ -594,29 +684,90 @@
     }
 
     // ---------- Report ----------
+    function markdownLite(text){
+      return text
+        .replace(/^###### (.*)$/gm, '<h6>$1</h6>')
+        .replace(/^##### (.*)$/gm, '<h5>$1</h5>')
+        .replace(/^#### (.*)$/gm, '<h4>$1</h4>')
+        .replace(/^### (.*)$/gm, '<h3>$1</h3>')
+        .replace(/^## (.*)$/gm, '<h2>$1</h2>')
+        .replace(/^# (.*)$/gm, '<h1>$1</h1>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/^- (.*)$/gm, '<li>$1</li>')
+        .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
+        .replace(/\n/g, '<br>');
+    }
+    function updateCounts(){
+      const t = $('#reportText').value;
+      const words = (t.trim().match(/\b\S+\b/g) || []).length;
+      $('#wordCount').textContent = words;
+      $('#charCount').textContent = t.length;
+    }
+    function setReportStatus(msg){ $('#reportStatus').textContent = msg; }
     function renderReport(){
       const t = getReport();
       $('#reportText').value = t;
       setReportStatus(t ? 'Loaded saved report.' : 'Not saved yet.');
+      updateCounts();
     }
-    function setReportStatus(msg){ $('#reportStatus').textContent = msg; }
     function initReport(){
-      $('#saveReport').addEventListener('click', ()=>{
-        setReport($('#reportText').value);
-        setReportStatus('Saved at ' + new Date().toLocaleTimeString());
+      const template = `# Website Review: Smart Medicine Locator
+
+**Summary**
+- Overall impression?
+
+**Design & Visuals**
+- Look & feel, layout.
+
+**Usability**
+- Ease of steps, confusing parts?
+
+**Performance**
+- Speed, map, results quality.
+
+**Features**
+- Login, history, report, settings, location presets.
+
+**Suggestions**
+- What to improve next?
+
+**Rating**
+- (1–5 stars):
+`;
+      $('#insertTemplate').addEventListener('click', ()=>{
+        if ($('#reportText').value.trim().length > 0 && !confirm('Replace current text with template?')) return;
+        $('#reportText').value = template; setReport($('#reportText').value);
+        setReportStatus('Template inserted & saved.'); updateCounts();
       });
+      $('#saveReport').addEventListener('click', ()=>{ setReport($('#reportText').value); setReportStatus('Saved at ' + new Date().toLocaleTimeString()); updateCounts(); });
       let deb; $('#reportText').addEventListener('input', ()=>{
-        clearTimeout(deb);
-        deb = setTimeout(()=>{
-          setReport($('#reportText').value);
-          setReportStatus('Autosaved at ' + new Date().toLocaleTimeString());
-        }, 600);
+        clearTimeout(deb); deb = setTimeout(()=>{ setReport($('#reportText').value); setReportStatus('Autosaved at ' + new Date().toLocaleTimeString()); updateCounts(); }, 500);
       });
       $('#downloadReport').addEventListener('click', ()=>{
         const blob = new Blob([$('#reportText').value], {type:'text/plain'});
         const url = URL.createObjectURL(blob);
-        const a = document.createElement('a'); a.href = url; a.download = 'medicine_report.txt';
-        document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+        const a = document.createElement('a'); a.href = url; a.download = 'website_report.txt'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+      });
+      $('#clearReport').addEventListener('click', ()=>{ if (!confirm('Clear the report text?')) return; $('#reportText').value=''; setReport(''); setReportStatus('Cleared.'); updateCounts(); });
+      let previewMode = false;
+      $('#togglePreview').addEventListener('click', ()=>{
+        previewMode = !previewMode;
+        if (previewMode){ $('#reportPreview').innerHTML = markdownLite($('#reportText').value); $('#reportEditorWrap').classList.add('hidden'); $('#reportPreview').classList.remove('hidden'); $('#togglePreview').textContent='Edit'; }
+        else { $('#reportEditorWrap').classList.remove('hidden'); $('#reportPreview').classList.add('hidden'); $('#togglePreview').textContent='Preview'; }
+      });
+      // rating stars
+      const stars = Array.from($('#ratingWrap').querySelectorAll('[data-star]'));
+      function paint(n){ stars.forEach(s => s.textContent = (+s.dataset.star <= n)? '★' : '☆'); }
+      stars.forEach(s=>{
+        s.addEventListener('click', ()=>{
+          const n = +s.dataset.star; paint(n);
+          const t = $('#reportText').value.trim();
+          const ratingLine = `\n**Rating:** ${'★'.repeat(n)}${'☆'.repeat(5-n)} (${n}/5)`;
+          if (/^\*\*Rating:\*\*/m.test(t)){ $('#reportText').value = t.replace(/^\*\*Rating:\*\*.*$/m, ratingLine); }
+          else { $('#reportText').value = (t ? t + '\n' : '') + ratingLine; }
+          setReport($('#reportText').value); setReportStatus('Rating saved.'); updateCounts();
+        });
       });
     }
 
@@ -626,46 +777,27 @@
       $('#settingsStatus').textContent = u ? `Logged in as ${u.name || u.phone || u.email}` : 'You are not logged in.';
     }
     function initSettings(){
-      $('#settingsLogin').addEventListener('click', ()=>{
-        $('#loginModal').classList.remove('hidden'); $('#loginModal').classList.add('flex');
-      });
-      $('#settingsLogout').addEventListener('click', ()=>{
-        clearUser();
-        location.reload();
-      });
+      $('#settingsLogin').addEventListener('click', ()=>{ $('#loginModal').classList.remove('hidden'); $('#loginModal').classList.add('flex'); });
+      $('#settingsLogout').addEventListener('click', ()=>{ clearUser(); location.reload(); });
 
-      // Use current geolocation and directly find nearest for typed medicine
       $('#settingsLocate').addEventListener('click', ()=>{
         const q = $('#searchInput').value.trim();
-        if (!q){ alert('Enter a medicine name in Home → Search first.'); return; }
+        if (!q){ alert('Enter a medicine name in Home → Search first.'); closeAllAcc(); openAcc('stepSearch'); return; }
         if (!navigator.geolocation){ alert('Geolocation not supported on this device.'); return; }
         navigator.geolocation.getCurrentPosition((pos)=>{
           updateLocation(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
           setActiveTab('tabHome');
-          // auto-run nearest with ANY radius so you see something
           $('#radiusSelect').value = 'any';
-          const rows = runCommonSearch(q, 'any', 'nearest');
-          if (!rows.length){ alert('No stores carry this medicine near your location.'); return; }
-          // jump into Step Nearest
-          nearestRows = rows; nearIdx = 0;
-          document.getElementById('stepNearest').classList.remove('hidden');
-          document.getElementById('stepSearch').classList.add('hidden');
-          document.getElementById('stepRadius').classList.add('hidden');
-          renderNearestInline();
+          nearestRows = runCommonSearch(q, 'any', 'nearest'); nearIdx = 0;
+          if (!nearestRows.length){ alert('No stores carry this medicine near your location.'); return; }
+          renderNearest();
+          closeAllAcc(); openAcc('stepNearest');
+          $('#settingsNearest').textContent = `Nearest for "${q}": ${nearestRows[0].name} • ${(km(nearestRows[0]._dist)).toFixed(2)} km`;
         }, (err)=>{
           alert('Could not get current location. Please allow permission and try again.');
           console.warn(err);
         }, { enableHighAccuracy:true, timeout:8000 });
       });
-
-      function renderNearestInline(){
-        const q = $('#searchInput').value.trim();
-        $('#nearTotal').textContent = nearestRows.length;
-        $('#nearIdx').textContent = nearIdx+1;
-        const p = nearestRows[nearIdx];
-        $('#nearResult').innerHTML = storeCard(p, q);
-        bindFocusButtons('#nearResult', nearestRows);
-      }
     }
 
     // ---------- Login ----------
@@ -677,19 +809,10 @@
         $('#openLogin').classList.add('hidden');
         $('#logoutBtn').classList.remove('hidden');
       }
+      const saved = getUser(); if (saved){ showLoggedIn(saved); }
 
-      function checkLogin(){
-        const saved = getUser();
-        if (saved){ showLoggedIn(saved); }
-      }
-
-      $('#openLogin').addEventListener('click', ()=>{
-        $('#loginModal').classList.remove('hidden'); $('#loginModal').classList.add('flex');
-      });
-      $('#closeLogin').addEventListener('click', ()=>{
-        $('#loginModal').classList.add('hidden'); $('#loginModal').classList.remove('flex');
-      });
-
+      $('#openLogin').addEventListener('click', ()=>{ $('#loginModal').classList.remove('hidden'); $('#loginModal').classList.add('flex'); });
+      $('#closeLogin').addEventListener('click', ()=>{ $('#loginModal').classList.add('hidden'); $('#loginModal').classList.remove('flex'); });
       $('#saveLogin').addEventListener('click', ()=>{
         const phone = $('#phone').value.trim();
         const email = $('#email').value.trim();
@@ -700,85 +823,49 @@
         setUser(user);
         $('#loginModal').classList.add('hidden'); $('#loginModal').classList.remove('flex');
         const label = name || phone;
-        $('#helloUser').textContent = `Hi, ${label}!`;
-        $('#helloUser').classList.remove('hidden');
-        $('#openLogin').classList.add('hidden');
-        $('#logoutBtn').classList.remove('hidden');
-        renderSettings();
-        renderProfile();
+        $('#helloUser').textContent = `Hi, ${label}!`; $('#helloUser').classList.remove('hidden'); $('#openLogin').classList.add('hidden'); $('#logoutBtn').classList.remove('hidden');
+        renderSettings(); renderProfile();
       });
-
-      $('#logoutBtn').addEventListener('click', ()=>{
-        clearUser();
-        location.reload();
-      });
-
-      checkLogin();
+      $('#logoutBtn').addEventListener('click', ()=>{ clearUser(); location.reload(); });
     }
 
-    // ---------- Locality presets (Kengeri / RR Nagar) ----------
+    // ---------- Locality presets ----------
     function setPresetLocation(name){
-      let loc;
-      if (name === 'kengeri'){ loc = { lat:12.9092, lng:77.4840 }; }
-      if (name === 'rrnagar'){ loc = { lat:12.9250, lng:77.5040 }; }
+      let loc; if (name === 'kengeri'){ loc = { lat:12.9092, lng:77.4840 }; } if (name === 'rrnagar'){ loc = { lat:12.9250, lng:77.5040 }; }
       if (!loc) return;
       updateLocation(loc.lat, loc.lng, 80);
-      // Highlight on map
       L.popup().setLatLng([loc.lat, loc.lng]).setContent(`<b>${name === 'kengeri' ? 'Kengeri' : 'Rajarajeshwari Nagar'}</b><br>Location set.`).openOn(map);
-      // Inform user
       $('#geoStatus').textContent += ` • Preset: ${name === 'kengeri' ? 'Kengeri' : 'RR Nagar'}`;
     }
-
     function initPresets(){
-      $('#setKengeri').addEventListener('click', ()=>{
-        setPresetLocation('kengeri');
-        // If a medicine is already typed, directly guide user into nearest search
-        const q = $('#searchInput').value.trim();
-        if (q){
-          $('#radiusSelect').value = 'any';
-          const rows = runCommonSearch(q, 'any', 'nearest');
-          if (rows.length){
-            nearestRows = rows; nearIdx = 0;
-            showOnlySteps(['stepNearest']);
-            // render card
-            $('#nearTotal').textContent = nearestRows.length;
-            $('#nearIdx').textContent = nearIdx+1;
-            $('#nearResult').innerHTML = storeCard(nearestRows[0], q);
-            bindFocusButtons('#nearResult', nearestRows);
-          }
-        }
-      });
-
-      $('#setRRNagar').addEventListener('click', ()=>{
-        setPresetLocation('rrnagar');
-        const q = $('#searchInput').value.trim();
-        if (q){
-          $('#radiusSelect').value = 'any';
-          const rows = runCommonSearch(q, 'any', 'nearest');
-          if (rows.length){
-            nearestRows = rows; nearIdx = 0;
-            showOnlySteps(['stepNearest']);
-            $('#nearTotal').textContent = nearestRows.length;
-            $('#nearIdx').textContent = nearIdx+1;
-            $('#nearResult').innerHTML = storeCard(nearestRows[0], q);
-            bindFocusButtons('#nearResult', nearestRows);
-          }
-        }
-      });
+      function quickNearest(){
+        const q = $('#searchInput').value.trim(); if (!q) return;
+        $('#radiusSelect').value = 'any';
+        nearestRows = runCommonSearch(q, 'any', 'nearest'); nearIdx=0;
+        if (nearestRows.length){ renderNearest(); closeAllAcc(); openAcc('stepNearest'); }
+      }
+      $('#setKengeri').addEventListener('click', ()=>{ setPresetLocation('kengeri'); quickNearest(); });
+      $('#setRRNagar').addEventListener('click', ()=>{ setPresetLocation('rrnagar'); quickNearest(); });
     }
 
     // ---------- Boot ----------
     window.addEventListener('DOMContentLoaded', ()=>{
       setupLogin();
       initMap();
-      initSteps();
       initTabs();
       initReport();
       initSettings();
       initPresets();
-      $('#searchInput').focus();
+      initAccordion();
+      initSteps();
+
       setActiveTab('tabHome');
+      // Start with all steps collapsed; user clicks headers to open.
+      closeAllAcc();
     });
   </script>
 </body>
 </html>
+
+
+
