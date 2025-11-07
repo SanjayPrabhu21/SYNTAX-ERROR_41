@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Smart Medicine Locator — Tabs + Profile + Report + Settings</title>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    html, body { height: 100%; }
+    #map { height: 420px; width: 100%; }
+    .glass { backdrop-filter: blur(12px); background: rgba(255,255,255,0.75); }
+    .tab-btn[aria-selected="true"] { background: #10b981; color: white; }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-sky-50 via-white to-emerald-50 text-slate-800">
+  <!-- Header -->
+  <header class="sticky top-0 z-30 bg-white/80 backdrop-blur border-b">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <h1 class="font-semibold flex items-center gap-2">
+        <span class="text-emerald-600">🩺</span> Smart Medicine Locator — Prototype
+      </h1>
+      <div class="flex items-center gap-3">
+        <span id="helloUser" class="text-sm text-slate-700 hidden"></span>
+        <button id="openLogin" class="text-sm px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">Login</button>
+        <button id="logoutBtn" class="text-sm px-4 py-2 rounded-lg border hover:bg-slate-50 hidden">Logout</button>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <nav class="max-w-6xl mx-auto px-4 pb-3">
+      <div role="tablist" aria-label="Main Tabs" class="flex gap-2">
+        <button class="tab-btn px-4 py-2 rounded-xl border hover:bg-slate-50" role="tab" id="tabbtn-home" aria-controls="tabHome" aria-selected="true">Home</button>
+        <button class="tab-btn px-4 py-2 rounded-xl border hover:bg-slate-50" role="tab" id="tabbtn-profile" aria-controls="tabProfile">Profile</button>
+        <button class="tab-btn px-4 py-2 rounded-xl border hover:bg-slate-50" role="tab" id="tabbtn-report" aria-controls="tabReport">Report</button>
+        <button class="tab-btn px-4 py-2 rounded-xl border hover:bg-slate-50" role="tab" id="tabbtn-settings" aria-controls="tabSettings">Settings</button>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Main -->
+  <main class="max-w-6xl mx-auto px-4 py-6 grid gap-6">
+    <!-- TAB: HOME -->
+    <section id="tabHome" role="tabpanel" aria-labelledby="tabbtn-home" class="grid lg:grid-cols-3 gap-6">
+      <div class="lg:col-span-2 grid gap-4">
+        <!-- Step 0: Search -->
+        <div id="stepSearch" class="glass rounded-2xl shadow p-4">
+          <h2 class="font-semibold mb-3">1) Search Medicine</h2>
+          <div class="flex gap-3 items-end">
+            <div class="flex-1">
+              <label class="text-xs text-slate-600">Medicine</label>
+              <!-- BIGGER SEARCH BAR + AUTOCOMPLETE -->
+              <input id="searchInput" list="medList" type="text" placeholder="e.g., Paracetamol 650 / Dolo 650 / Cetirizine 10"
+                     class="w-full px-6 py-4 text-3xl rounded-2xl border focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                     autocomplete="off"/>
+              <datalist id="medList"></datalist>
+            </div>
+            <button id="goStepRadius" class="px-5 py-3 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">
+              Next: Radius →
+            </button>
+          </div>
+          <p class="text-xs text-slate-500 mt-2">Tip: Press Enter to jump ahead.</p>
+        </div>
+
+        <!-- Step 1: Radius -->
+        <div id="stepRadius" class="glass rounded-2xl shadow p-4 hidden">
+          <h2 class="font-semibold mb-3">2) Choose Radius</h2>
+          <div class="flex flex-wrap items-center gap-3">
+            <select id="radiusSelect" class="px-3 py-2 rounded-xl border focus:outline-none focus:ring-2 focus:ring-emerald-100">
+              <option value="0.5">0.5 km</option>
+              <option value="1" selected>1 km</option>
+              <option value="2">2 km</option>
+              <option value="5">5 km</option>
+              <option value="any">Any distance</option>
+            </select>
+
+            <div class="ml-auto flex gap-2">
+              <button id="backToSearch" class="px-4 py-2 rounded-lg border hover:bg-slate-50">← Back</button>
+              <button id="goStepNearest" class="px-5 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">
+                Next: Nearest →
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Nearest (one-by-one) -->
+        <div id="stepNearest" class="glass rounded-2xl shadow p-4 hidden">
+          <div class="flex items-center justify-between mb-2">
+            <h2 class="font-semibold">3) Nearest Store</h2>
+            <div class="text-sm text-slate-500">Result <span id="nearIdx">0</span>/<span id="nearTotal">0</span></div>
+          </div>
+          <div class="flex gap-2 mb-3">
+            <button id="nearPrev" class="px-3 py-1.5 rounded-lg border hover:bg-slate-50">← Previous</button>
+            <button id="nearNext" class="px-3 py-1.5 rounded-lg border hover:bg-slate-50">Next →</button>
+            <div class="ml-auto flex gap-2">
+              <button id="backToRadius" class="px-4 py-1.5 rounded-lg border hover:bg-slate-50">← Back</button>
+              <button id="goStepCheapest" class="px-5 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">Next: Cheapest →</button>
+            </div>
+          </div>
+          <div id="nearResult" class="rounded-xl border p-3 bg-white/80"></div>
+        </div>
+
+        <!-- Step 3: Cheapest (one-by-one) -->
+        <div id="stepCheapest" class="glass rounded-2xl shadow p-4 hidden">
+          <div class="flex items-center justify-between mb-2">
+            <h2 class="font-semibold">4) Cheapest In-Stock</h2>
+            <div class="text-sm text-slate-500">Result <span id="cheapIdx">0</span>/<span id="cheapTotal">0</span></div>
+          </div>
+          <div class="flex gap-2 mb-3">
+            <button id="cheapPrev" class="px-3 py-1.5 rounded-lg border hover:bg-slate-50">← Previous</button>
+            <button id="cheapNext" class="px-3 py-1.5 rounded-lg border hover:bg-slate-50">Next →</button>
+            <div class="ml-auto">
+              <button id="backToNearest" class="px-4 py-1.5 rounded-lg border hover:bg-slate-50">← Back</button>
+            </div>
+          </div>
+          <div id="cheapResult" class="rounded-xl border p-3 bg-white/80"></div>
+        </div>
+      </div>
+
+      <!-- Map -->
+      <aside class="glass rounded-2xl shadow p-4">
+        <h3 class="font-semibold mb-2">Map</h3>
+        <div id="map" class="rounded-xl overflow-hidden"></div>
+        <p id="geoStatus" class="text-xs text-slate-500 mt-2">Loading map…</p>
+      </aside>
+    </section>
+
+    <!-- TAB: PROFILE -->
+    <section id="tabProfile" role="tabpanel" aria-labelledby="tabbtn-profile" class="hidden">
+      <div class="grid md:grid-cols-2 gap-6">
+        <!-- Login Data -->
+        <div class="glass rounded-2xl shadow p-4">
+          <h2 class="font-semibold mb-3">Profile</h2>
+          <div id="profileInfo" class="text-sm space-y-1">
+            <!-- filled by JS -->
+          </div>
+        </div>
+
+        <!-- Search History -->
+        <div class="glass rounded-2xl shadow p-4">
+          <div class="flex items-center justify-between mb-2">
+            <h2 class="font-semibold">Medicine Search History</h2>
+            <button id="clearHistory" class="px-3 py-1.5 rounded-lg border hover:bg-slate-50">Clear</button>
+          </div>
+          <ul id="historyList" class="text-sm divide-y">
+            <!-- filled by JS -->
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB: REPORT -->
+    <section id="tabReport" role="tabpanel" aria-labelledby="tabbtn-report" class="hidden">
+      <div class="glass rounded-2xl shadow p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="font-semibold">Report</h2>
+          <div class="flex gap-2">
+            <button id="saveReport" class="px-4 py-2 rounded-lg border hover:bg-slate-50">Save</button>
+            <button id="downloadReport" class="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">Download .txt</button>
+          </div>
+        </div>
+        <textarea id="reportText" class="w-full h-72 p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-emerald-200" placeholder="Write your report here..."></textarea>
+        <p id="reportStatus" class="text-xs text-slate-500 mt-2">Not saved yet.</p>
+      </div>
+    </section>
+
+    <!-- TAB: SETTINGS -->
+    <section id="tabSettings" role="tabpanel" aria-labelledby="tabbtn-settings" class="hidden">
+      <div class="glass rounded-2xl shadow p-4">
+        <h2 class="font-semibold mb-3">Settings</h2>
+        <p id="settingsStatus" class="text-sm text-slate-600 mb-4">Checking login status…</p>
+        <div class="flex flex-wrap gap-3">
+          <button id="settingsLogin" class="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">Login</button>
+          <button id="settingsLogout" class="px-4 py-2 rounded-lg border hover:bg-slate-50">Logout</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Login Modal -->
+  <div id="loginModal" class="fixed inset-0 hidden items-center justify-center bg-black/50 p-4 z-50">
+    <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-semibold">Welcome! Please Login</h2>
+        <button id="closeLogin" class="text-slate-500 hover:text-slate-700 text-2xl" aria-label="Close login">&times;</button>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium mb-1">Phone Number *</label>
+          <input id="phone" type="tel" placeholder="Enter 10-digit phone number"
+                 class="w-full px-4 py-2 rounded-xl border focus:outline-none focus:ring-2 focus:ring-emerald-300" inputmode="numeric" pattern="[0-9]*"/>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium mb-1">Email (Gmail preferred) *</label>
+          <input id="email" type="email" placeholder="yourname@gmail.com"
+                 class="w-full px-4 py-2 rounded-xl border focus:outline-none focus:ring-2 focus:ring-emerald-300"/>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium mb-1">Your Name (Optional)</label>
+          <input id="name" type="text" placeholder="Enter your name"
+                 class="w-full px-4 py-2 rounded-xl border focus:outline-none focus:ring-2 focus:ring-emerald-300"/>
+        </div>
+
+        <button id="saveLogin" class="w-full mt-2 px-4 py-3 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition">
+          Continue →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ---------- Helpers ----------
+    const $ = (s) => document.querySelector(s);
+    const km = (m) => (m/1000);
+    const formatRs = (x) => `₹${(+x).toFixed(2)}`;
+    const gdir = (o, d) =>
+      `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(o.lat+','+o.lng)}&destination=${encodeURIComponent(d.lat+','+d.lng)}&travelmode=driving`;
+    const fmtDT = (ts) => new Date(ts).toLocaleString();
+
+    // Haversine
+    function distM(a, b){
+      const R = 6371e3, toRad = (d) => d*Math.PI/180;
+      const dLat = toRad(b.lat-a.lat), dLng = toRad(b.lng-a.lng);
+      const s = Math.sin(dLat/2)**2 + Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.sin(dLng/2)**2;
+      return 2*R*Math.atan2(Math.sqrt(s), Math.sqrt(1-s));
+    }
+
+    // ---------- Leaflet icon fix ----------
+    (function fixLeafletIcons(){
+      const base = 'https://unpkg.com/leaflet@1.9.4/dist/images/';
+      L.Icon.Default.mergeOptions({
+        iconRetinaUrl: base + 'marker-icon-2x.png',
+        iconUrl: base + 'marker-icon.png',
+        shadowUrl: base + 'marker-shadow.png',
+      });
+    })();
+
+    // ---------- Mock Data ----------
+    const PHARMACIES = [
+      { id: 1, name: 'MedPlus Indiranagar', phone:'+91-8022221111', lat:12.9719, lng:77.6412, rating:4.4,
+        inventory:{'Paracetamol 650':{price:22,stock:25}, 'Dolo 650':{price:28,stock:35}, 'Azithromycin 500':{price:82,stock:8}, 'Cetirizine 10':{price:15,stock:40}, 'Pantoprazole 40':{price:32,stock:20}, 'Amoxicillin 500':{price:68,stock:10}, 'ORS Sachet':{price:18,stock:50}} },
+      { id: 2, name: 'Apollo Pharmacy MG Road', phone:'+91-8022222222', lat:12.9738, lng:77.6113, rating:4.2,
+        inventory:{'Paracetamol 650':{price:24,stock:2}, 'Dolo 650':{price:27,stock:12}, 'Metformin 500':{price:16,stock:30}, 'Atorvastatin 10':{price:55,stock:10}, 'Cough Syrup 100ml':{price:75,stock:9}} },
+      { id: 3, name: '1MG Wellness Koramangala', phone:'+91-8033333333', lat:12.9345, lng:77.6141, rating:4.5,
+        inventory:{'Paracetamol 650':{price:26,stock:20}, 'Dolo 650':{price:29,stock:0}, 'Metformin 500':{price:15,stock:14}, 'Azithromycin 500':{price:78,stock:6}, 'Vitamin C 500':{price:45,stock:25}, 'Zinc 50':{price:28,stock:30}} },
+      { id: 4, name: 'Netmeds Residency Road', phone:'+91-8044444444', lat:12.9689, lng:77.6046, rating:4.1,
+        inventory:{'Paracetamol 650':{price:23,stock:0}, 'Dolo 650':{price:26,stock:20}, 'ORS Sachet':{price:18,stock:40}, 'Atorvastatin 10':{price:53,stock:5}, 'Omeprazole 20':{price:25,stock:16}} },
+      { id: 5, name: 'Sri Lakshmi Medicals', phone:'+91-8066666666', lat:12.9798, lng:77.5946, rating:4.3,
+        inventory:{'Paracetamol 650':{price:21.5,stock:22}, 'Dolo 650':{price:27,stock:15}, 'Metformin 500':{price:14.5,stock:22}, 'Atorvastatin 10':{price:52,stock:7}, 'Pantoprazole 40':{price:30,stock:14}} },
+      { id: 6, name: 'Wellness Forever Indiranagar', phone:'+91-8055555555', lat:12.9711, lng:77.6382, rating:4.0,
+        inventory:{'Paracetamol 650':{price:25,stock:18}, 'Dolo 650':{price:26.5,stock:8}, 'Cetirizine 10':{price:14,stock:50}, 'Cough Syrup 100ml':{price:72,stock:12}, 'Amoxicillin 500':{price:70,stock:6}} },
+      { id: 7, name: 'Practo Care Pharmacy', phone:'+91-8077777777', lat:12.9279, lng:77.6271, rating:4.2,
+        inventory:{'Dolo 650':{price:28.5,stock:30}, 'Azithromycin 500':{price:80,stock:9}, 'Amoxicillin 500':{price:69,stock:10}, 'Vitamin C 500':{price:44,stock:20}, 'Zinc 50':{price:27,stock:40}} },
+      { id: 8, name: 'Aster Pharmacy Whitefield', phone:'+91-8088888888', lat:12.9698, lng:77.7500, rating:4.1,
+        inventory:{'Paracetamol 650':{price:23.5,stock:32}, 'Metformin 500':{price:16,stock:40}, 'Atorvastatin 10':{price:54,stock:11}, 'Omeprazole 20':{price:24,stock:18}, 'ORS Sachet':{price:17,stock:60}} },
+      { id: 9, name: 'Sanjeevini Medicals Jayanagar', phone:'+91-8099999999', lat:12.9304, lng:77.5838, rating:4.6,
+        inventory:{'Paracetamol 650':{price:22.5,stock:26}, 'Dolo 650':{price:27,stock:16}, 'Pantoprazole 40':{price:31,stock:10}, 'Cough Syrup 100ml':{price:70,stock:8}, 'Amoxicillin 500':{price:66,stock:12}} },
+      { id:10, name:'City Care Pharmacy RT Nagar', phone:'+91-8010101010', lat:13.0285, lng:77.5920, rating:4.0,
+        inventory:{'Paracetamol 650':{price:24,stock:14}, 'Metformin 500':{price:15.5,stock:36}, 'Cetirizine 10':{price:13,stock:60}, 'Vitamin C 500':{price:43,stock:25}, 'Zinc 50':{price:26,stock:35}} },
+      { id:11, name:'Care n Cure HSR', phone:'+91-8023456789', lat:12.9100, lng:77.6440, rating:4.3,
+        inventory:{'Paracetamol 650':{price:23.5,stock:20}, 'Dolo 650':{price:26,stock:10}, 'Ibuprofen 400':{price:35,stock:40}, 'Ranitidine 150':{price:20,stock:15}} },
+      { id:12, name:'HealthBuddy Bellandur', phone:'+91-8045671234', lat:12.9270, lng:77.6760, rating:4.1,
+        inventory:{'Paracetamol 650':{price:24,stock:18}, 'ORS Sachet':{price:16,stock:70}, 'Zinc 50':{price:25,stock:60}, 'Vitamin C 500':{price:42,stock:30}} },
+      { id:13, name:'MedKart Kalyan Nagar', phone:'+91-8098765432', lat:13.0210, lng:77.6420, rating:4.0,
+        inventory:{'Metformin 500':{price:15,stock:50}, 'Atorvastatin 10':{price:52,stock:9}, 'Telmisartan 40':{price:60,stock:12}, 'Amlodipine 5':{price:28,stock:25}} },
+      { id:14, name:'Apollo Pharmacy Hebbal', phone:'+91-8023125555', lat:13.0355, lng:77.5960, rating:4.2,
+        inventory:{'Dolo 650':{price:27.5,stock:18}, 'Azithromycin 500':{price:79,stock:5}, 'Cough Syrup 100ml':{price:74,stock:6}, 'Cetirizine 10':{price:14.5,stock:55}} },
+      { id:15, name:'Netmeds JP Nagar', phone:'+91-8044007788', lat:12.9025, lng:77.5850, rating:4.1,
+        inventory:{'Paracetamol 650':{price:22,stock:30}, 'Pantoprazole 40':{price:29,stock:18}, 'Omeprazole 20':{price:23,stock:22}, 'Ibuprofen 400':{price:33,stock:35}} },
+      { id:16, name:'Aster Pharmacy Yelahanka', phone:'+91-8088002233', lat:13.1010, lng:77.5965, rating:4.0,
+        inventory:{'Paracetamol 650':{price:23,stock:28}, 'Metformin 500':{price:16,stock:44}, 'Amlodipine 5':{price:27,stock:20}, 'Telmisartan 40':{price:59,stock:10}} },
+      { id:17, name:'Wellness Forever Koramangala', phone:'+91-8055011122', lat:12.9365, lng:77.6270, rating:4.2,
+        inventory:{'Dolo 650':{price:26.5,stock:22}, 'Cetirizine 10':{price:13.5,stock:70}, 'ORS Sachet':{price:17,stock:80}, 'Vitamin C 500':{price:41,stock:35}} },
+      { id:18, name:'Pharmeasy Express Marathahalli', phone:'+91-8070010099', lat:12.9550, lng:77.7010, rating:4.3,
+        inventory:{'Paracetamol 650':{price:21.9,stock:40}, 'Azithromycin 500':{price:77,stock:7}, 'Amoxicillin 500':{price:67,stock:8}, 'Cough Syrup 100ml':{price:71,stock:10}} },
+    ];
+
+    const MEDICINE_NAMES = [...new Set(PHARMACIES.flatMap(p => Object.keys(p.inventory)))].sort();
+
+    // ---------- State ----------
+    let map, userMarker, accuracyCircle;
+    let userLoc = { lat:12.9716, lng:77.5946 }; // Bengaluru default
+    let nearestRows = [], nearIdx = 0;
+    let cheapestRows = [], cheapIdx = 0;
+
+    // ---------- Storage helpers ----------
+    function getUser(){ try { return JSON.parse(localStorage.getItem('sml_user')||'null'); } catch { return null; } }
+    function setUser(u){ localStorage.setItem('sml_user', JSON.stringify(u)); }
+    function clearUser(){ localStorage.removeItem('sml_user'); }
+    function getHistory(){ try { return JSON.parse(localStorage.getItem('sml_history')||'[]'); } catch { return []; } }
+    function setHistory(arr){ localStorage.setItem('sml_history', JSON.stringify(arr)); }
+    function pushHistory(entry){
+      const arr = getHistory();
+      arr.unshift(entry);
+      // keep last 50
+      if (arr.length > 50) arr.length = 50;
+      setHistory(arr);
+    }
+    function getReport(){ return localStorage.getItem('sml_report') || ''; }
+    function setReport(text){ localStorage.setItem('sml_report', text); }
+
+    // ---------- Map ----------
+    function initMap(){
+      map = L.map('map').setView([userLoc.lat, userLoc.lng], 12);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19, attribution:'&copy; OpenStreetMap' }).addTo(map);
+      userMarker = L.marker([userLoc.lat, userLoc.lng]).addTo(map).bindPopup('Your location');
+      accuracyCircle = L.circle([userLoc.lat, userLoc.lng], { radius: 80, color:'#60a5fa', fillColor:'#93c5fd', fillOpacity:0.25 }).addTo(map);
+
+      $('#geoStatus').textContent = `Location: ${userLoc.lat.toFixed(4)}, ${userLoc.lng.toFixed(4)} (waiting for GPS…)`;
+      if (navigator.geolocation){
+        navigator.geolocation.getCurrentPosition((pos)=>{
+          userLoc = { lat:pos.coords.latitude, lng:pos.coords.longitude };
+          const acc = Math.min(Math.max(pos.coords.accuracy||60,10), 200);
+          userMarker.setLatLng([userLoc.lat, userLoc.lng]);
+          accuracyCircle.setLatLng([userLoc.lat, userLoc.lng]).setRadius(acc);
+          map.setView([userLoc.lat, userLoc.lng], 13);
+          $('#geoStatus').textContent = `Location: ${userLoc.lat.toFixed(4)}, ${userLoc.lng.toFixed(4)} • ±${Math.round(acc)} m`;
+        }, (err)=>{
+          $('#geoStatus').textContent = 'GPS permission denied — using Bengaluru center.';
+          console.warn(err);
+        }, { enableHighAccuracy:true, timeout:8000 });
+      }
+    }
+
+    function putStoreMarkers(rows, query){
+      const toRemove = [];
+      map.eachLayer((layer)=>{
+        if (layer instanceof L.Marker && layer !== userMarker){ toRemove.push(layer); }
+        if (layer instanceof L.Popup){ toRemove.push(layer); }
+      });
+      toRemove.forEach(l=>map.removeLayer(l));
+
+      rows.forEach((p, i)=>{
+        L.marker([p.lat, p.lng]).addTo(map)
+          .bindPopup(`<b>${i+1}. ${p.name}</b><br>⭐ ${p.rating}<br>${formatRs(p.inventory[query].price)} • ${km(p._dist).toFixed(2)} km`);
+      });
+      if (rows.length){
+        const g = L.featureGroup(rows.map(p=>L.marker([p.lat,p.lng])));
+        map.fitBounds(g.getBounds().pad(0.2));
+      }
+    }
+
+    // ---------- COMMON SEARCH HANDLER ----------
+    function runCommonSearch(query, radiusValue, mode){
+      const q = (query||'').trim();
+      if (!q){ alert('Enter a medicine name'); return []; }
+
+      // filter stores that carry the item
+      let rows = PHARMACIES.filter(p => p.inventory[q]);
+
+      // attach distance
+      rows = rows.map(p => ({...p, _dist: distM(userLoc, {lat:p.lat, lng:p.lng})}));
+
+      // radius filter
+      if (radiusValue !== 'any'){
+        const rKm = parseFloat(radiusValue);
+        rows = rows.filter(p => km(p._dist) <= rKm);
+      }
+
+      // sorting per mode
+      if (mode === 'nearest'){
+        rows.sort((a,b)=> a._dist - b._dist);
+      } else if (mode === 'cheapest'){
+        rows = rows.filter(p => p.inventory[q].stock > 0);
+        rows.sort((a,b)=> a.inventory[q].price - b.inventory[q].price || a._dist - b._dist);
+      } else {
+        rows.sort((a,b)=>{
+          const ia=a.inventory[q], ib=b.inventory[q];
+          const sa=ia.stock>0?0:1, sb=ib.stock>0?0:1;
+          if (sa!==sb) return sa-sb;
+          if (ia.price!==ib.price) return ia.price-ib.price;
+          return a._dist-b._dist;
+        });
+      }
+
+      putStoreMarkers(rows, q);
+      return rows;
+    }
+
+    // ---------- Render cards ----------
+    function storeCard(p, q){
+      const inv = p.inventory[q];
+      const dkm = km(p._dist).toFixed(2);
+      return `
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <div class="font-semibold">${p.name}</div>
+            <div class="text-xs text-slate-600">⭐ ${p.rating} • ${dkm} km away</div>
+            <div class="text-xs text-slate-500 mt-1">Phone: ${p.phone||'-'}</div>
+          </div>
+          <div class="text-right">
+            <div class="text-lg font-semibold">${formatRs(inv.price)}</div>
+            <div class="text-xs ${inv.stock>0?'text-emerald-600':'text-rose-600'}">
+              ${inv.stock>0?`In stock: ${inv.stock}`:'Out of stock'}
+            </div>
+          </div>
+        </div>
+        <div class="mt-2 flex flex-wrap gap-2">
+          <a class="px-3 py-1.5 rounded-lg border hover:bg-slate-50" href="${gdir(userLoc,{lat:p.lat,lng:p.lng})}" target="_blank" rel="noopener">Directions</a>
+          <button class="px-3 py-1.5 rounded-lg border hover:bg-slate-50" data-focus="${p.id}">Show on map</button>
+          ${p.phone?`<a class="px-3 py-1.5 rounded-lg border hover:bg-slate-50" href="tel:${p.phone}">Call</a>`:''}
+        </div>
+      `;
+    }
+
+    function bindFocusButtons(containerId, rows){
+      const wrap = $(containerId);
+      wrap.querySelectorAll('[data-focus]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const id = +btn.getAttribute('data-focus');
+          const p = rows.find(r=>r.id===id);
+          if (!p) return;
+          map.setView([p.lat,p.lng], 16);
+          L.popup().setLatLng([p.lat,p.lng]).setContent(`<b>${p.name}</b>`).openOn(map);
+        });
+      });
+    }
+
+    // ---------- Steps logic ----------
+    function show(el, flag){ el.classList[flag?'remove':'add']('hidden'); }
+    function showOnlySteps(ids){
+      const all = ['stepSearch','stepRadius','stepNearest','stepCheapest'];
+      all.forEach(id => {
+        const visible = ids.includes(id);
+        const el = document.getElementById(id);
+        if (visible) el.classList.remove('hidden'); else el.classList.add('hidden');
+      });
+    }
+
+    function initSteps(){
+      const searchInput = $('#searchInput');
+      const radiusSelect = $('#radiusSelect');
+
+      // autocomplete list
+      const dl = $('#medList');
+      MEDICINE_NAMES.forEach(n=>{
+        const opt=document.createElement('option');
+        opt.value=n; dl.appendChild(opt);
+      });
+
+      // load last query
+      const last = localStorage.getItem('sml_last_query');
+      if (last) searchInput.value = last;
+
+      // STEP 0 → STEP 1
+      $('#goStepRadius').addEventListener('click', ()=>{
+        if (!searchInput.value.trim()){ alert('Enter a medicine name'); return; }
+        localStorage.setItem('sml_last_query', searchInput.value.trim());
+        showOnlySteps(['stepRadius']);
+        radiusSelect.focus();
+      });
+
+      searchInput.addEventListener('keydown', (e)=>{
+        if (e.key === 'Enter'){ $('#goStepRadius').click(); }
+      });
+
+      $('#backToSearch').addEventListener('click', ()=>{
+        showOnlySteps(['stepSearch']);
+        searchInput.focus();
+      });
+
+      // STEP 1 → STEP 2 (Nearest)
+      function goNearest(){
+        const q = searchInput.value.trim();
+        const r = $('#radiusSelect').value;
+        nearestRows = runCommonSearch(q, r, 'nearest');
+        nearIdx = 0;
+        if (!nearestRows.length){ alert('No stores found for selected radius.'); return; }
+        renderNearest();
+        // record history
+        pushHistory({ q, radius: r, ts: Date.now() });
+        showOnlySteps(['stepNearest']);
+      }
+
+      $('#goStepNearest').addEventListener('click', goNearest);
+      radiusSelect.addEventListener('keydown', (e)=>{
+        if (e.key === 'Enter') goNearest();
+      });
+
+      $('#backToRadius').addEventListener('click', ()=>{
+        showOnlySteps(['stepRadius']);
+        radiusSelect.focus();
+      });
+
+      // Nearest navigation
+      $('#nearPrev').addEventListener('click', ()=>{ if (nearIdx>0){ nearIdx--; renderNearest(); } });
+      $('#nearNext').addEventListener('click', ()=>{ if (nearIdx<nearestRows.length-1){ nearIdx++; renderNearest(); } });
+
+      // STEP 2 → STEP 3 (Cheapest)
+      $('#goStepCheapest').addEventListener('click', ()=>{
+        const q = searchInput.value.trim();
+        const r = $('#radiusSelect').value;
+        cheapestRows = runCommonSearch(q, r, 'cheapest');
+        cheapIdx = 0;
+        if (!cheapestRows.length){ alert('No in-stock stores found in selected radius.'); return; }
+        renderCheapest();
+        showOnlySteps(['stepCheapest']);
+      });
+
+      $('#backToNearest').addEventListener('click', ()=>{
+        showOnlySteps(['stepNearest']);
+      });
+
+      function renderNearest(){
+        $('#nearTotal').textContent = nearestRows.length;
+        $('#nearIdx').textContent = nearIdx+1;
+        const p = nearestRows[nearIdx];
+        $('#nearResult').innerHTML = storeCard(p, $('#searchInput').value.trim());
+        bindFocusButtons('#nearResult', nearestRows);
+      }
+
+      function renderCheapest(){
+        $('#cheapTotal').textContent = cheapestRows.length;
+        $('#cheapIdx').textContent = cheapIdx+1;
+        const p = cheapestRows[cheapIdx];
+        $('#cheapResult').innerHTML = storeCard(p, $('#searchInput').value.trim());
+        bindFocusButtons('#cheapResult', cheapestRows);
+      }
+    }
+
+    // ---------- Tabs ----------
+    function setActiveTab(id){
+      // Hide all tabs
+      ['tabHome','tabProfile','tabReport','tabSettings'].forEach(tab=>{
+        const el = document.getElementById(tab);
+        if (tab === id) el.classList.remove('hidden'); else el.classList.add('hidden');
+      });
+      // Update aria-selected
+      ['home','profile','report','settings'].forEach(name=>{
+        const b = document.getElementById('tabbtn-' + name);
+        b.setAttribute('aria-selected', (('tab' + name.charAt(0).toUpperCase()+name.slice(1)) === id) ? 'true':'false');
+      });
+
+      if (id === 'tabHome' && map){
+        // Fix map sizing when returning to tab
+        setTimeout(()=> map.invalidateSize(), 80);
+      }
+      if (id === 'tabProfile'){
+        renderProfile();
+      }
+      if (id === 'tabReport'){
+        renderReport();
+      }
+      if (id === 'tabSettings'){
+        renderSettings();
+      }
+    }
+
+    function initTabs(){
+      $('#tabbtn-home').addEventListener('click', ()=> setActiveTab('tabHome'));
+      $('#tabbtn-profile').addEventListener('click', ()=> setActiveTab('tabProfile'));
+      $('#tabbtn-report').addEventListener('click', ()=> setActiveTab('tabReport'));
+      $('#tabbtn-settings').addEventListener('click', ()=> setActiveTab('tabSettings'));
+    }
+
+    // ---------- Profile (login data + history) ----------
+    function renderProfile(){
+      const user = getUser();
+      const box = $('#profileInfo');
+      if (user){
+        box.innerHTML = `
+          <div><span class="text-slate-500">Name:</span> ${user.name || '-'}</div>
+          <div><span class="text-slate-500">Phone:</span> ${user.phone}</div>
+          <div><span class="text-slate-500">Email:</span> ${user.email}</div>
+          <div><span class="text-slate-500">Signed in:</span> ${fmtDT(user.ts)}</div>
+        `;
+      } else {
+        box.innerHTML = `
+          <div class="text-slate-600">You are not logged in.</div>
+          <button class="mt-2 px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700" id="profileLoginBtn">Login</button>
+        `;
+        // wire up
+        const btn = $('#profileLoginBtn');
+        if (btn) btn.addEventListener('click', ()=> {
+          $('#loginModal').classList.remove('hidden'); $('#loginModal').classList.add('flex');
+        });
+      }
+
+      const list = $('#historyList');
+      const hist = getHistory();
+      if (!hist.length){
+        list.innerHTML = `<li class="py-3 text-slate-500">No searches yet.</li>`;
+      } else {
+        list.innerHTML = hist.map(h => `
+          <li class="py-3 flex items-center justify-between">
+            <div>
+              <div class="font-medium">${h.q}</div>
+              <div class="text-xs text-slate-500">Radius: ${h.radius} • ${fmtDT(h.ts)}</div>
+            </div>
+            <button class="px-3 py-1 rounded-lg border hover:bg-slate-50" data-replay="${h.q}|${h.radius}">Search again</button>
+          </li>
+        `).join('');
+        // replay buttons
+        list.querySelectorAll('[data-replay]').forEach(btn=>{
+          btn.addEventListener('click', ()=>{
+            const [q, r] = btn.getAttribute('data-replay').split('|');
+            // jump to Home, fill fields, go nearest
+            setActiveTab('tabHome');
+            $('#searchInput').value = q;
+            $('#radiusSelect').value = r;
+            document.getElementById('goStepNearest').click();
+          });
+        });
+      }
+
+      $('#clearHistory').addEventListener('click', ()=>{
+        if (confirm('Clear your medicine search history?')){
+          setHistory([]);
+          renderProfile();
+        }
+      });
+    }
+
+    // ---------- Report ----------
+    let reportDebounce;
+    function renderReport(){
+      const t = getReport();
+      $('#reportText').value = t;
+      setReportStatus(t ? 'Loaded saved report.' : 'Not saved yet.');
+    }
+    function setReportStatus(msg){
+      $('#reportStatus').textContent = msg;
+    }
+    function initReport(){
+      $('#saveReport').addEventListener('click', ()=>{
+        const text = $('#reportText').value;
+        setReport(text);
+        setReportStatus('Saved at ' + new Date().toLocaleTimeString());
+      });
+      $('#reportText').addEventListener('input', ()=>{
+        clearTimeout(reportDebounce);
+        reportDebounce = setTimeout(()=>{
+          setReport($('#reportText').value);
+          setReportStatus('Autosaved at ' + new Date().toLocaleTimeString());
+        }, 600);
+      });
+      $('#downloadReport').addEventListener('click', ()=>{
+        const blob = new Blob([$('#reportText').value], {type:'text/plain'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'medicine_report.txt';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      });
+    }
+
+    // ---------- Settings ----------
+    function renderSettings(){
+      const u = getUser();
+      $('#settingsStatus').textContent = u ? `Logged in as ${u.name || u.phone || u.email}` : 'You are not logged in.';
+    }
+    function initSettings(){
+      $('#settingsLogin').addEventListener('click', ()=>{
+        $('#loginModal').classList.remove('hidden'); $('#loginModal').classList.add('flex');
+      });
+      $('#settingsLogout').addEventListener('click', ()=>{
+        clearUser();
+        location.reload();
+      });
+    }
+
+    // ---------- Login ----------
+    function setupLogin(){
+      function showLoggedIn({ name, phone, email }){
+        const label = name || phone || email || 'User';
+        $('#helloUser').textContent = `Hi, ${label}!`;
+        $('#helloUser').classList.remove('hidden');
+        $('#openLogin').classList.add('hidden');
+        $('#logoutBtn').classList.remove('hidden');
+      }
+
+      function checkLogin(){
+        const saved = getUser();
+        if (saved){
+          showLoggedIn(saved);
+        } else {
+          // prompt login on first visit
+          $('#loginModal').classList.remove('hidden'); $('#loginModal').classList.add('flex');
+        }
+      }
+
+      $('#openLogin').addEventListener('click', ()=>{
+        $('#loginModal').classList.remove('hidden'); $('#loginModal').classList.add('flex');
+      });
+      $('#closeLogin').addEventListener('click', ()=>{
+        $('#loginModal').classList.add('hidden'); $('#loginModal').classList.remove('flex');
+      });
+
+      $('#saveLogin').addEventListener('click', ()=>{
+        const phone = $('#phone').value.trim();
+        const email = $('#email').value.trim();
+        const name  = $('#name').value.trim();
+
+        if (!/^\d{10}$/.test(phone)) { alert('Please enter a valid 10-digit phone number'); return; }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { alert('Please enter a valid email address'); return; }
+        // To enforce Gmail only, uncomment:
+        // if (!/@gmail\.com$/i.test(email)) { alert('Please use a Gmail address'); return; }
+
+        const user = { phone, email, name, ts: Date.now() };
+        setUser(user);
+
+        $('#loginModal').classList.add('hidden'); $('#loginModal').classList.remove('flex');
+        const label = name || phone;
+        $('#helloUser').textContent = `Hi, ${label}!`;
+        $('#helloUser').classList.remove('hidden');
+        $('#openLogin').classList.add('hidden');
+        $('#logoutBtn').classList.remove('hidden');
+        renderSettings();
+        renderProfile();
+      });
+
+      $('#logoutBtn').addEventListener('click', ()=>{
+        clearUser();
+        location.reload();
+      });
+
+      checkLogin();
+    }
+
+    // ---------- Boot ----------
+    window.addEventListener('DOMContentLoaded', ()=>{
+      setupLogin();
+      initMap();
+      initSteps();
+      initTabs();
+      initReport();
+      initSettings();
+      $('#searchInput').focus();
+
+      // Default active tab: Home
+      setActiveTab('tabHome');
+    });
+  </script>
+</body>
+</html>
+
+

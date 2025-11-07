@@ -1,2 +1,0 @@
-# SYNTAX-ERROR_41
-
